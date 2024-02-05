@@ -10,3 +10,21 @@ For pancreas visium analysis, I will need to check if there is a way to get the 
 
 Hovernet3 is my environment that has openslide, timm, torch, and tensorflow, so pretty much everything
 
+2/5/24
+----------------------------
+When running the STQ pipeline to just extract inception features, make sure to comment out 
+withLabel: process_ctranspath {
+        cpus = 10
+        container = params.container_ctranspath        
+        if (params.ctranspath_device_mode == 'gpu') {
+            cpus = 16
+            clusterOptions = '--time=02:00:00 -q gpu_inference --gres=gpu:1 --export=ALL'
+            containerOptions = '--nv'
+            queue = 'gpus'
+        }
+        else if (params.ctranspath_device_mode == 'cpu') {
+            cpus = 10
+            clusterOptions = '--time=16:00:00'
+        }
+    }
+    in nextflow.config 
