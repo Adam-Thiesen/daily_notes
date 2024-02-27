@@ -28,3 +28,7 @@ withLabel: process_ctranspath {
         }
     }
     in nextflow.config 
+
+2/27/24
+--------------------------------
+The dicom files from the paper on rhabo mutational prediction all seem to be exactly the same, so it will be difficult to tell which ones are the real images. Additionally, these are multiframe dicom images that are tiled into 1080 240x240 tiles. I can convert them to Tiff and get it to somewhat work, but the image size is quite small.
