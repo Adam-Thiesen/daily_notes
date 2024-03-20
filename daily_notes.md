@@ -43,3 +43,9 @@ When I use bfconvert to convert the .dcm to .tiff there is no parameter to save 
 When I open the largest image file on qupath v0.5 it opens perfectly. When I export as ome.tiff with 4x downsampling, it also opens perfectly. Therefore, as a worst case scenario, doing everything through qupath may be an option.
 
 Next, I will need to learn about qupath scripting. 
+
+3/20/24
+-------------------------------------
+Need to check the imagedownloader script and adjust to only pull the larget file, then rename it.
+It appears all the files are needed in order to be read properly by QuPath, as if Qupath is using the other files in the path for more information...
+I adjusted the script to account for this.
