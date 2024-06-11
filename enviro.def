@@ -1,0 +1,35 @@
+Bootstrap: library
+From: ubuntu:20.04
+
+%post
+    # Update and install necessary packages
+    apt-get update && apt-get install -y wget bzip2 curl
+
+    # Install Miniconda
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+    bash /tmp/miniconda.sh -b -p /opt/conda
+    rm /tmp/miniconda.sh
+
+    # Initialize Conda
+    /opt/conda/bin/conda init bash
+
+    # Create a Conda environment and install packages
+    /opt/conda/bin/conda create -n myenv python=3.8 pydicom -y
+
+    # Clean Conda cache
+    /opt/conda/bin/conda clean -a -y
+
+    # Install s5cmd
+    wget https://github.com/peak/s5cmd/releases/download/v2.0.0/s5cmd_2.0.0_Linux-64bit.tar.gz -O /tmp/s5cmd.tar.gz
+    tar -xzf /tmp/s5cmd.tar.gz -C /usr/local/bin s5cmd
+    rm /tmp/s5cmd.tar.gz
+
+%environment
+    # Set PATH to include the Conda environment
+    export PATH=/opt/conda/envs/myenv/bin:$PATH
+
+%runscript
+    # When the container is run, activate the environment
+    echo "Activating Conda environment..."
+    source /opt/conda/bin/activate myenv
+    exec "$@"
