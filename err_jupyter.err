@@ -1,0 +1,17 @@
+INFO:    underlay of /etc/localtime required more than 50 (94) bind mounts
+INFO:    underlay of /usr/bin/nvidia-smi required more than 50 (476) bind mounts
+13:4: not a valid test operator: (
+13:4: not a valid test operator: 535.129.03
+[I 10:21:59.376 LabApp] jupyter_tensorboard extension loaded.
+[I 10:21:59.383 LabApp] JupyterLab extension loaded from /usr/local/lib/python3.10/dist-packages/jupyterlab
+[I 10:21:59.383 LabApp] JupyterLab application directory is /usr/local/share/jupyter/lab
+[I 10:21:59.385 LabApp] [Jupytext Server Extension] NotebookApp.contents_manager_class is (a subclass of) jupytext.TextFileContentsManager already - OK
+[I 10:21:59.390 LabApp] Serving notebooks from local directory: /flashscratch/thiesa/Pytorch
+[I 10:21:59.390 LabApp] Jupyter Notebook 6.4.10 is running at:
+[I 10:21:59.390 LabApp] http://hostname:8888/?token=0ce030f862a7da2c615bf3a5bd0904084f30fbc8706dbb8f
+[I 10:21:59.390 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 10:21:59.399 LabApp] 
+    
+    To access the notebook, open this file in a browser:
+        
+    Or copy and paste this URL:
