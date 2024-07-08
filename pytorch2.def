@@ -1,0 +1,42 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:23.08-py3
+
+%labels
+    Author "Your Name"
+    Version "1.0"
+
+%help
+    This container includes PyTorch with CUDA support pre-installed, optimized for NVIDIA GPUs as per the 23.08 release notes.
+
+%environment
+    export PATH="/opt/conda/bin:$PATH"
+
+%post
+    # Ensure wget is installed for downloading Miniconda
+    apt-get update && apt-get install -y wget
+
+    # Install Miniconda if not present
+    if [ ! -f "/opt/conda/bin/conda" ]; then
+        echo "Conda not found, installing Miniconda..."
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh
+        bash /miniconda.sh -b -p /opt/conda
+        rm /miniconda.sh
+    fi
+
+    # Set up Conda environment
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate base
+    conda install -y numpy pandas matplotlib scikit-learn jupyter
+    pip install tensorboard
+    conda install -y pytorch torchvision torchaudio cudatoolkit=11.0 -c pytorch
+
+    # Clean up
+    conda clean -a -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%test
+    python -c "import torch; print(torch.__version__)"
+    python -c "import pandas; print(pandas.__version__)"
+    python -c "import sklearn; print(sklearn.__version__)"
+    python -c "import tensorboard; print(tensorboard.__version__)"
