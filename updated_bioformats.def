@@ -1,0 +1,52 @@
+Bootstrap: docker
+From: continuumio/miniconda3
+
+%post
+    # Use bash for the post section
+    #!/bin/bash
+
+    # Install necessary system dependencies
+    apt-get update && apt-get install -y openjdk-17-jdk gcc g++ build-essential python3-dev
+
+    # Set up Java environment variables
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    export PATH=$JAVA_HOME/bin:$PATH
+
+    # Make Java environment variables available in subsequent commands
+    echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> /etc/profile.d/java.sh
+    echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile.d/java.sh
+    . /etc/profile.d/java.sh
+
+    # Initialize conda for shell use
+    conda init bash
+    . /root/.bashrc
+
+    # Create a new conda environment with a compatible Python version
+    conda create -n bioformats_env python=3.9 -y
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate bioformats_env
+
+    # Install necessary Python packages with conda
+    conda install -c conda-forge openjdk numpy=1.21.6 tifffile cython javabridge -y
+
+    # Clone and setup python-bioformats
+    git clone https://github.com/CellProfiler/python-bioformats.git
+    cd python-bioformats/bioformats/jars
+    rm bioformats_package.jar
+    wget https://downloads.openmicroscopy.org/bio-formats/7.3.0/artifacts/bioformats_package.jar
+    cd ../../
+    pip install .
+
+%environment
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    export PATH=$JAVA_HOME/bin:$PATH
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate bioformats_env
+
+%runscript
+    #!/bin/bash
+    python "$@"
+
+%startscript
+    #!/bin/bash
+    python "$@"
