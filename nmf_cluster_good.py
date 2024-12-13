@@ -177,3 +177,27 @@ def plot_clustered_core(core_filename):
 
 # Example of replotting a core with its cluster labels
 plot_clustered_core('reg0015_X01_Y01_Z01.tif')
+
+# Assuming H is the matrix from NMF (nmf.components_)
+# selected_proteins contains the names of the markers used
+
+# Get the number of clusters and markers
+n_clusters, n_markers = H.shape
+
+# For each cluster, find the top contributing markers
+top_markers_per_cluster = 5  # Number of top markers to display per cluster (adjust as needed)
+
+for cluster_idx in range(n_clusters):
+    print(f"\nCluster {cluster_idx}:")
+    
+    # Get the contributions of each marker to the current cluster
+    cluster_contributions = H[cluster_idx]
+    
+    # Get the indices of the top markers
+    top_marker_indices = np.argsort(cluster_contributions)[::-1][:top_markers_per_cluster]  # Sort descending
+    
+    # Print the top markers and their contribution scores
+    for marker_idx in top_marker_indices:
+        marker_name = selected_proteins[marker_idx]  # Get the marker name
+        contribution_score = cluster_contributions[marker_idx]  # Get the contribution score
+        print(f"{marker_name}: {contribution_score:.4f}")
