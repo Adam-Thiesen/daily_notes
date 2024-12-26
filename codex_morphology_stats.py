@@ -1,3 +1,54 @@
+#JAJAJAJAJA
+
+#read in segmentation csv files
+#Read and concatenate the csv files (outputs from the cell segmentation algorithms). 
+df_seg = sp.pp.read_segdf(
+    segfile_list = [ # list of segmented files
+    output_dir + "spot1_mesmer_result.csv",
+    output_dir + "spot2_mesmer_result.csv",
+    output_dir + "spot3_mesmer_result.csv",
+    output_dir + "spot4_mesmer_result.csv",
+    output_dir + "spot5_mesmer_result.csv",
+    output_dir + "spot6_mesmer_result.csv",
+    output_dir + "spot8_mesmer_result.csv",
+    output_dir + "spot9_mesmer_result.csv",
+    output_dir + "spot11_mesmer_result.csv",
+    output_dir + "spot12_mesmer_result.csv",
+    output_dir + "spot13_mesmer_result.csv",
+    output_dir + "spot14_mesmer_result.csv",
+    output_dir + "spot15_mesmer_result.csv",
+    output_dir + "spot16_mesmer_result.csv",
+    output_dir + "spot17_mesmer_result.csv",
+    output_dir + "spot18_mesmer_result.csv",
+    output_dir + "spot19_mesmer_result.csv",
+    output_dir + "spot20_mesmer_result.csv",
+    output_dir + "spot21_mesmer_result.csv",
+    output_dir + "spot22_mesmer_result.csv",
+    output_dir + "spot23_mesmer_result.csv",
+    output_dir + "spot24_mesmer_result.csv",
+    output_dir + "spot25_mesmer_result.csv",
+    output_dir + "spot26_mesmer_result.csv",
+    output_dir + "spot27_mesmer_result.csv",
+    output_dir + "spot28_mesmer_result.csv",
+    output_dir + "spot29_mesmer_result.csv",
+    output_dir + "spot30_mesmer_result.csv"
+],
+    seg_method = 'mesmer',
+    region_list = [
+    "reg0001", "reg0002", "reg0003", "reg0004", "reg0005", 
+    "reg0006", "reg0008", "reg0009", "reg0011", "reg0012", "reg0013", "reg0014", "reg0015", 
+    "reg0016", "reg0017", "reg0018", "reg0019", "reg0020", 
+    "reg0021", "reg0022", "reg0023", "reg0024", "reg0025", 
+    "reg0026", "reg0027", "reg0028", "reg0029", "reg0030"]
+,
+)
+
+#Get the shape of the data
+print(df_seg.shape)
+
+#See what it looks like
+df_seg.head()
+
 import pandas as pd
 # This is to normalize the data per region/tif
 dfz = pd.DataFrame()
