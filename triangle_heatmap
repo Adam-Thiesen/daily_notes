@@ -1,0 +1,108 @@
+import os
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+def plot_triangle_heatmap_with_grey_diag(
+    auc_matrix,
+    file_ids,
+    backbone,
+    output_dir,
+    vmin=0.5,
+    vmax=1.0
+):
+    """
+    Plots the lower-triangular heatmap of `auc_matrix` in Reds,
+    while overlaying the diagonal squares in a solid grey color.
+    """
+
+    # Convert -1 to NaN, so we don't plot "invalid" squares.
+    auc_matrix = np.where(auc_matrix == -1, np.nan, auc_matrix)
+    n = auc_matrix.shape[0]
+
+    labels = [str(fid) for fid in file_ids]
+
+    # --- 1) Create masks ---
+    # lower_tri_mask: True for cells *above* the diagonal => hide them in the first Reds heatmap.
+    lower_tri_mask = np.triu(np.ones_like(auc_matrix, dtype=bool), k=1)
+
+    # diag_mask: True for everything EXCEPT the diagonal => hide them in the Grey heatmap.
+    diag_mask = ~np.eye(n, dtype=bool)
+
+    # --- 2) Plot the main lower-triangle in "Reds" ---
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(
+        auc_matrix,
+        mask=lower_tri_mask,
+        cmap="Reds",
+        vmin=vmin,
+        vmax=vmax,
+        annot=True,
+        fmt=".3f",
+        xticklabels=labels,
+        yticklabels=labels,
+        cbar_kws={'label': 'AUC'},
+        annot_kws={"size": 10, "weight": "bold"},
+        alpha=1.0,
+        zorder=1
+    )
+
+    # --- 3) Overlay the diagonal squares in a solid grey ---
+    # If you just use `cmap="Greys"` with the real diagonal values,
+    # they might blend in if the AUC is also in a red color range.
+    # So let's replace the diagonal with a sentinel (e.g. 999)
+    # so they all map to the same color from a one-color colormap.
+
+    # a) Save the original diagonal values
+    diag_vals = np.diag(auc_matrix).copy()
+
+    # b) Fill the diagonal with a sentinel
+    np.fill_diagonal(auc_matrix, 999)
+
+    # c) Build a single-color colormap for grey
+    grey_cmap = mcolors.ListedColormap(["#AAAAAA"])
+    # We also set a small normalization range around 999 so everything is the same color
+    norm = mcolors.Normalize(vmin=998.5, vmax=999.5)
+
+    sns.heatmap(
+        auc_matrix,
+        mask=diag_mask,       # Hide everything except diagonal
+        cmap=grey_cmap,
+        norm=norm,
+        cbar=False,           # We don't need a separate colorbar for the grey
+        annot=False,
+        alpha=1.0,
+        zorder=2,            # Draw on top of the red layer
+    )
+
+    # d) Restore the original diagonal in the array if desired
+    for i in range(n):
+        auc_matrix[i, i] = diag_vals[i]
+
+    # --- 4) Final formatting and save ---
+    plt.title(f"Combination AUC (Lower Triangle + Grey Diagonal) for {backbone.upper()}",
+              fontsize=14, weight="bold")
+    plt.xlabel("File ID", fontsize=12, weight="bold")
+    plt.ylabel("File ID", fontsize=12, weight="bold")
+    plt.xticks(fontsize=10, rotation=45, weight="bold")
+    plt.yticks(fontsize=10, weight="bold")
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, f"triangle_heatmap_grey_diag_{backbone}.png"),
+                dpi=300)
+    plt.close()
+
+
+# 5) Plot each backbone's combination heatmap with same scale
+print("\n=== Plotting COMBINATION-FILE heatmaps ===")
+for backbone in BACKBONES:
+    plot_triangle_heatmap_with_grey_diag(
+        combo_auc_dict[backbone],
+        FILE_IDS,
+        backbone,
+        OUTPUT_DIR,
+        vmin=global_min,
+        vmax=global_max
+    )
