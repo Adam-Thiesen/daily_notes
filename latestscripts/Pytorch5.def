@@ -1,0 +1,75 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:23.08-py3     # CUDA 11.8 + PyTorch 2.1 wheel pre‑installed
+
+%labels
+    Author "Your Name"
+    Version "optB-conda-forge‑numpy1.26"
+
+%environment
+    # Make conda available in every shell
+    export PATH="/opt/conda/bin:$PATH"
+
+%post
+    set -e
+    ###########################################################################
+    # 1. Minimal OS utilities for the build
+    ###########################################################################
+    apt-get update && \
+        apt-get install -y --no-install-recommends wget bzip2 ca-certificates && \
+        rm -rf /var/lib/apt/lists/*
+
+    ###########################################################################
+    # 2. Install Miniforge (conda‑forge bootstrap) to /opt/conda
+    ###########################################################################
+    wget -qO /tmp/miniforge.sh \
+        https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+    bash /tmp/miniforge.sh -b -p /opt/conda
+    rm  /tmp/miniforge.sh
+
+    ###########################################################################
+    # 3. Conda configuration: conda‑forge only, strict channel priority
+    ###########################################################################
+    /opt/conda/bin/conda config --system --set channel_priority strict
+    /opt/conda/bin/conda config --system --add channels conda-forge
+    /opt/conda/bin/conda config --system --set auto_update_conda false
+
+    ###########################################################################
+    # 4. Install user‑space scientific stack (but **not** PyTorch)
+    #    • Pin Python 3.10 (matches base image ABI)
+    #    • Pin NumPy < 2 to stay compatible with the bundled PyTorch build
+    ###########################################################################
+    /opt/conda/bin/conda install -y mamba -n base -c conda-forge
+    /opt/conda/bin/mamba install -y \
+        python=3.10                   \
+        numpy=1.26.*                  \
+        pandas matplotlib scikit-learn jupyterlab tensorboard
+
+    ###########################################################################
+    # 5. Expose system‑level PyTorch wheel to the conda env
+    ###########################################################################
+    SYS_SITE_PKGS="/usr/local/lib/python3.10/dist-packages"
+    CONDA_SITE_PKGS="/opt/conda/lib/python3.10/site-packages"
+    echo "${SYS_SITE_PKGS}" > "${CONDA_SITE_PKGS}/_ngc_pytorch.pth"
+
+    ###########################################################################
+    # 6. Cleanup
+    ###########################################################################
+    /opt/conda/bin/conda clean -afy
+    apt-get clean
+
+%runscript
+    # Default entry: execute the given command inside the container
+    exec "$@"
+
+%test
+    # Verify that everything imports (CUDA not checked here because build sandbox lacks drivers)
+    source /opt/conda/etc/profile.d/conda.sh
+    conda activate base
+    python - <<'PY'
+import sys, torch, pandas, sklearn, tensorboard
+print("Python   :", sys.version.split()[0])
+print("Torch    :", torch.__version__, "(CUDA OK:", torch.cuda.is_available(), ")")
+print("Pandas   :", pandas.__version__)
+print("Sklearn  :", sklearn.__version__)
+print("TB       :", tensorboard.__version__)
+PY
