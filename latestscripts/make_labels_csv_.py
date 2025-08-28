@@ -139,3 +139,90 @@ p = Path(H5AD)
 out = p.with_name(p.stem + "_subtype_fix.h5ad")
 adata.write(out)
 print(f"\nWrote updated AnnData to: {out}")
+
+
+
+
+
+
+
+
+
+# make_clam_labels_from_adata.py
+from pathlib import Path
+import pandas as pd
+
+# ---- settings ----
+CLAM_ROOT = Path("/flashscratch/thiesa/clam")
+H5AD_PATH = None  # e.g. Path("/path/to/your.h5ad"); leave None if 'adata' is already in memory
+
+# ---- load adata if needed ----
+if H5AD_PATH:
+    import scanpy as sc
+    adata = sc.read_h5ad(H5AD_PATH)  # noqa: F821  (satisfied only if H5AD_PATH set)
+
+obs = adata.obs.copy()  # noqa: F821
+
+# standardize column names we need
+obs = obs.rename(columns={"Patient ID": "case_id", "Histological Subtype": "hist_subtype"})
+
+# 1) slide_id from .obs.index, drop anything after the first "."
+idx = obs.index.astype(str)
+obs["slide_id"] = idx.str.split(".", n=1).str[0]
+
+# 2) map ONLY exact 'Embryonal RMS' / 'Alveolar RMS' (case-insensitive, trimmed)
+EXACTS = {
+    "embryonal rms": "embryonal",
+    "alveolar rms": "alveolar",
+}
+
+def map_label_exact(x):
+    if pd.isna(x):
+        return None
+    key = str(x).strip().casefold()
+    return EXACTS.get(key, None)
+
+obs["label"] = obs["hist_subtype"].map(map_label_exact)
+
+# keep only embryonal/alveolar
+obs = obs[obs["label"].notna()].copy()
+
+# 3) collapse to one row per slide_id
+g = obs.groupby("slide_id", as_index=False)
+
+def mode_or_first(s: pd.Series):
+    m = s.mode()
+    return m.iat[0] if not m.empty else s.iloc[0]
+
+slide_df = g.agg(
+    case_id=("case_id", mode_or_first),
+    label=("label", mode_or_first),
+    n_case_ids=("case_id", "nunique"),
+    n_labels=("label", "nunique"),
+    n_cells=("label", "size"),
+)
+
+conflicts = slide_df[(slide_df["n_case_ids"] > 1) | (slide_df["n_labels"] > 1)]
+if not conflicts.empty:
+    print("WARNING: some slides have mixed case_ids and/or labels (kept majority):")
+    print(conflicts[["slide_id", "n_case_ids", "n_labels"]].head(10))
+
+labels = slide_df[["case_id", "slide_id", "label"]].copy()
+
+# 4) optional: sanity vs WSI directory
+wsi_dir = CLAM_ROOT / "data" / "wsi"
+if wsi_dir.exists():
+    wsi_stems = {p.stem for p in wsi_dir.iterdir() if p.is_file()}
+    missing = set(labels["slide_id"]) - wsi_stems
+    extra   = wsi_stems - set(labels["slide_id"])
+    if missing:
+        print(f"{len(missing)} labeled slides not found in wsi/:", sorted(list(missing))[:10])
+    if extra:
+        print(f"{len(extra)} WSI files have no label:", sorted(list(extra))[:10])
+
+# 5) write CSV
+out = CLAM_ROOT / "data" / "new_labels.csv"
+out.parent.mkdir(parents=True, exist_ok=True)
+labels.to_csv(out, index=False)
+print(f"Wrote {out} with {len(labels)} slides")
+print(labels["label"].value_counts())
