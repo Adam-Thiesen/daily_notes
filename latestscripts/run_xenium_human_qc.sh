@@ -15,7 +15,7 @@ set -euo pipefail
 ########################
 
 # Container image that has python, scanpy, anndata, umap-learn, scrublet (optional), etc.
-CONTAINER="/flashscratch/thiesa/codex2/xenium_sc2.sif"
+CONTAINER=""
 
 # Script & data locations
 WORKDIR="${SLURM_SUBMIT_DIR}"                # where this .sh and the python script live
