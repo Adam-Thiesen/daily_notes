@@ -1,0 +1,52 @@
+Bootstrap: docker
+From: ubuntu:22.04     # any recent Debian/Ubuntu works
+
+%labels
+    Author YourName
+    Version v1
+    Description "Scanpy + Jupyter container (no conda)"
+
+%post
+    ## --- system packages ---------------------------------------------------
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-dev build-essential \
+        git wget ca-certificates \
+        libblas-dev liblapack-dev gfortran \
+        libfreetype6-dev pkg-config \
+        libgeos-dev            # needed for shapely (<2.0 wheels)
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    ## --- python packages ----------------------------------------------------
+    pip3 install --no-cache-dir --upgrade pip
+    pip3 install --no-cache-dir \
+        numpy pandas scanpy tifffile scikit-image shapely matplotlib \
+        jupyterlab opencv-python  # added opencv-python
+
+    ## (optional) keep image small
+    python3 -m pip cache purge
+
+%environment
+    # put user-installed executables first
+    export PATH=/usr/local/bin:$PATH
+    # recommended by scanpy
+    export MPLBACKEND=Agg
+    # don’t bite people who forget --allow-root
+    export JUPYTER_ALLOW_INSECURE_WRITES=true
+
+%runscript
+    # default action is to launch Jupyter Lab on port 8888, no token
+    exec jupyter lab --ip=0.0.0.0 --port=${JUPYTER_PORT:-8888} \
+                     --no-browser --NotebookApp.token='' \
+                     --NotebookApp.password='' "$@"
+
+%help
+    This container bundles:
+      • numpy, pandas, scanpy, tifffile
+      • scikit-image (filters, morphology, measure, segmentation)
+      • shapely
+      • matplotlib
+      • jupyter / jupyter-lab
+      • opencv-python
+    All installed with pip only (no conda).
+
